@@ -1,55 +1,517 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Security protections -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;">
-    <meta name="referrer" content="no-referrer">
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <!-- Prevent caching of sensitive information -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Professional Calendar System for Appointments</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProBooking - Professional Calendar System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
     <script>
-      // Immediate protection against development tools
-      (function() {
-        'use strict';
-        
-        // Only in production
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-          // Disable right click immediately
-          document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-          });
-          
-          // Disable development keys
-          document.addEventListener('keydown', function(e) {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-                (e.ctrlKey && e.key === 'U')) {
-              e.preventDefault();
-              return false;
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-in': 'slideIn 0.3s ease-out',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
             }
-          });
-          
-          // Clear console periodically
-          setInterval(function() {
-            console.clear();
-          }, 1000);
-          
-          // Warning message
-          console.log('%c🔒 RESTRICTED ACCESS', 'color: red; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);');
-          console.log('%cThis application is protected. Unauthorized access is prohibited.', 'color: orange; font-size: 16px; font-weight: bold;');
         }
-      })();
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            @apply bg-gray-100 dark:bg-gray-800;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            @apply bg-gray-400 dark:bg-gray-500;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: all 0.3s ease;
+        }
+
+        /* Glass morphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .dark .glass {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Hide elements initially for animation */
+        .animate-on-load {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .animate-on-load.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center z-50 transition-colors duration-300">
+        <div class="text-center relative z-10 max-w-lg mx-auto px-4">
+            <!-- Logo Animation -->
+            <div class="relative mb-12">
+                <div class="w-32 h-32 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl animate-bounce hover:shadow-3xl transition-all duration-500 hover:scale-110 hover:rotate-12 group">
+                    <i data-lucide="calendar" class="h-16 w-16 text-white animate-pulse group-hover:scale-110 transition-transform duration-300"></i>
+                </div>
+                <div class="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-spin shadow-lg">
+                    <i data-lucide="sparkles" class="h-6 w-6 text-white animate-pulse"></i>
+                </div>
+                <div class="absolute -bottom-4 -left-4 w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                    <i data-lucide="crown" class="h-5 w-5 text-white"></i>
+                </div>
+            </div>
+
+            <!-- Brand -->
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+                ProBooking
+            </h1>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-8">
+                Preparing your professional space
+            </h2>
+
+            <!-- Loading Animation -->
+            <div class="space-y-8 mb-12">
+                <div class="flex justify-center space-x-3">
+                    <div class="w-5 h-5 bg-blue-600 rounded-full animate-bounce shadow-lg"></div>
+                    <div class="w-5 h-5 bg-purple-600 rounded-full animate-bounce shadow-lg" style="animation-delay: 0.1s;"></div>
+                    <div class="w-5 h-5 bg-indigo-600 rounded-full animate-bounce shadow-lg" style="animation-delay: 0.2s;"></div>
+                    <div class="w-5 h-5 bg-pink-600 rounded-full animate-bounce shadow-lg" style="animation-delay: 0.3s;"></div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="w-full max-w-md mx-auto">
+                    <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
+                        <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full animate-pulse shadow-lg relative overflow-hidden w-0 transition-all duration-1000">
+                            <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Message -->
+            <div class="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+                <div class="flex items-center justify-center space-x-3 mb-4">
+                    <i data-lucide="zap" class="w-6 h-6 text-blue-600 dark:text-blue-400 animate-pulse"></i>
+                    <span class="text-xl font-bold text-gray-800 dark:text-white">Loading dashboard</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 text-lg">
+                    Setting up your professional experience
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="hidden min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 transition-colors duration-300">
+        <!-- Background Animation -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full animate-pulse"></div>
+            <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/10 rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[32rem] h-[32rem] bg-indigo-500/5 rounded-full animate-pulse" style="animation-delay: 2s;"></div>
+        </div>
+
+        <div class="w-full max-w-6xl mx-auto relative z-10">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center space-x-3 mb-6">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 hover:rotate-12 group">
+                        <i data-lucide="calendar" class="h-8 w-8 text-white group-hover:scale-110 transition-transform duration-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                            ProBooking
+                        </h1>
+                        <p class="text-gray-600 dark:text-gray-400 font-medium">
+                            Professional Management Platform
+                        </p>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                    Welcome Back
+                </h2>
+                <p class="text-xl text-gray-600 dark:text-gray-300">
+                    Select your account type to continue
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                <!-- User Type Selection -->
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-8">
+                        User Type
+                    </h3>
+                    
+                    <div class="space-y-4" id="user-types">
+                        <!-- Professional -->
+                        <button class="user-type-btn w-full p-6 rounded-3xl border-2 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-left group border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xl" data-role="professional">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300 bg-gradient-to-r from-blue-500 to-cyan-600">
+                                    <i data-lucide="user" class="w-8 h-8 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                            Professional
+                                        </h4>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 font-medium mb-3">
+                                        Manage your practice
+                                    </p>
+                                    <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+                                        Manage appointments, clients and professional services
+                                    </p>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Appointment management</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Service control</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Business analytics</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Client -->
+                        <button class="user-type-btn w-full p-6 rounded-3xl border-2 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-left group border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xl" data-role="client">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300 bg-gradient-to-r from-green-500 to-emerald-600">
+                                    <i data-lucide="calendar" class="w-8 h-8 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                                            Client
+                                        </h4>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 font-medium mb-3">
+                                        Book services
+                                    </p>
+                                    <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+                                        Find and book appointments with professionals
+                                    </p>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Book appointments</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">View history</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Leave reviews</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Super Admin -->
+                        <button class="user-type-btn w-full p-6 rounded-3xl border-2 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-left group border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-xl" data-role="superadmin">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300 bg-gradient-to-r from-purple-500 to-pink-600">
+                                    <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                            Super Admin
+                                        </h4>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 font-medium mb-3">
+                                        Manage the system
+                                    </p>
+                                    <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+                                        Full control of platform and users
+                                    </p>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">User management</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">System analytics</span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-600"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Global configuration</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <div class="animate-on-load">
+                    <div id="login-form" class="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/10 dark:to-cyan-900/10 backdrop-blur-xl rounded-3xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-2xl hover:shadow-3xl transition-all duration-500">
+                        <div class="text-center mb-8">
+                            <div id="selected-role-icon" class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg hover:rotate-12 hover:scale-110 transition-transform duration-300 group">
+                                <i data-lucide="user" class="w-10 h-10 text-white group-hover:scale-110 transition-transform duration-300"></i>
+                            </div>
+                            <h3 id="selected-role-title" class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                Sign In as Professional
+                            </h3>
+                            <p id="selected-role-subtitle" class="text-gray-600 dark:text-gray-400">
+                                Manage your practice
+                            </p>
+                        </div>
+
+                        <form id="login-form-element" class="space-y-6">
+                            <!-- Email Field -->
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                    Email
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i data-lucide="mail" class="h-5 w-5 text-gray-400"></i>
+                                    </div>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        class="w-full pl-10 pr-4 py-3 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-gray-300 dark:border-gray-600"
+                                        placeholder="your@email.com"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Password Field -->
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                    Password
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i data-lucide="lock" class="h-5 w-5 text-gray-400"></i>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        class="w-full pl-10 pr-12 py-3 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border-gray-300 dark:border-gray-600"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        id="toggle-password"
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
+                                    >
+                                        <i data-lucide="eye" class="h-5 w-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Error Message -->
+                            <div id="error-message" class="hidden p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                                <p class="text-sm text-red-600 dark:text-red-400 font-medium"></p>
+                            </div>
+
+                            <!-- Demo Credentials Button -->
+                            <button
+                                type="button"
+                                id="demo-credentials"
+                                class="w-full py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-300 text-sm font-medium"
+                            >
+                                Use demo credentials
+                            </button>
+
+                            <!-- Submit Button -->
+                            <button
+                                type="submit"
+                                id="login-submit"
+                                class="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center justify-center space-x-2"
+                            >
+                                <span>Sign In</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </form>
+
+                        <!-- Demo Info -->
+                        <div class="mt-6 p-4 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center space-x-2">
+                                <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
+                                <span>Demo Credentials</span>
+                            </h4>
+                            <div id="demo-info" class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                <p><strong>Email:</strong> john@probooking.com</p>
+                                <p><strong>Password:</strong> password123</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="hidden">
+        <!-- Navigation -->
+        <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-700 bg-transparent">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-20">
+                    <!-- Logo -->
+                    <div class="flex items-center">
+                        <button id="logo-btn" class="flex items-center space-x-3 group">
+                            <div class="relative">
+                                <i data-lucide="calendar" class="h-12 w-12 text-blue-600 dark:text-blue-400 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500"></i>
+                                <div class="absolute inset-0 bg-blue-600/20 rounded-full scale-0 group-hover:scale-200 transition-transform duration-700 animate-pulse"></div>
+                            </div>
+                            <span class="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                                ProBooking
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Items -->
+                    <div class="hidden lg:block">
+                        <div id="nav-items" class="ml-10 flex items-center space-x-2">
+                            <!-- Navigation items will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Right side items -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Search Button -->
+                        <button class="hidden md:flex items-center space-x-2 px-6 py-3 bg-gray-100/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 rounded-2xl transition-all duration-500 hover:scale-110 hover:shadow-xl group backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                            <i data-lucide="search" class="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors group-hover:rotate-12 duration-300"></i>
+                            <span class="text-sm text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Search</span>
+                        </button>
+
+                        <!-- Notifications -->
+                        <div class="relative">
+                            <button id="notifications-btn" class="relative p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-500 hover:scale-110 hover:shadow-xl group border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50">
+                                <i data-lucide="bell" class="h-6 w-6 text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors group-hover:animate-bounce"></i>
+                                <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center animate-pulse shadow-lg">
+                                    2
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Theme Toggle -->
+                        <button
+                            id="theme-toggle"
+                            class="p-3 rounded-2xl hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-500 hover:scale-110 hover:shadow-xl group border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50"
+                        >
+                            <i data-lucide="moon" class="h-6 w-6 text-gray-600 dark:text-gray-300 group-hover:rotate-180 group-hover:scale-125 transition-transform duration-700"></i>
+                        </button>
+
+                        <!-- Profile Menu -->
+                        <div class="relative">
+                            <button id="profile-btn" class="flex items-center space-x-3 p-2 rounded-2xl hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-500 hover:scale-105 hover:shadow-xl group border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50">
+                                <img
+                                    id="user-avatar"
+                                    src="https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop&crop=face"
+                                    alt="User"
+                                    class="h-10 w-10 rounded-full object-cover ring-2 ring-white dark:ring-gray-700 group-hover:ring-blue-400 transition-all duration-300"
+                                />
+                                <i data-lucide="chevron-down" class="h-4 w-4 text-gray-600 dark:text-gray-300 transition-transform duration-300"></i>
+                            </button>
+                        </div>
+
+                        <!-- Mobile menu button -->
+                        <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-2xl hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-500">
+                            <i data-lucide="menu" class="h-6 w-6 text-gray-600 dark:text-gray-300"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="pt-20">
+            <!-- Content will be dynamically loaded here -->
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/components.js"></script>
+    
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
 </html>
